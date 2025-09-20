@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "./assets/logo.png";
+import { ToastContainer, toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [form, setForm] = useState({
@@ -9,19 +11,40 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (form.password !== form.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    console.log("New User Registration:", form);
-    // Here you would call your backend API (Express + MongoDB) to create user
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          name: form.name,
+        }),
+      });
+      const data = await res.json();
+      if (data.message === "User already exists") {
+        toast.error("User already exists!", {
+          position: "bottom-right",
+        });
+        return;
+      }
+      navigate("/dashboard");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("email", form.email);
+    } catch (err) {
+      toast.error(err.message, { position: "bottom-right" });
+    }
   };
 
   return (
@@ -37,7 +60,7 @@ const Signup = () => {
         </h2>
 
         {/* Signup Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <input
             type="text"
             name="name"
@@ -76,12 +99,12 @@ const Signup = () => {
           />
 
           <button
-            type="submit"
+            onClick={handleSubmit}
             className="w-full rounded-md bg-gradient-to-r from-indigo-500 to-green-400 px-4 py-2 font-medium text-white shadow hover:opacity-90"
           >
             Sign Up
           </button>
-        </form>
+        </div>
 
         {/* Already have an account */}
         <p className="mt-6 text-center text-sm text-gray-600">
@@ -90,6 +113,7 @@ const Signup = () => {
             Log in
           </NavLink>
         </p>
+        <ToastContainer />
       </div>
     </div>
   );
