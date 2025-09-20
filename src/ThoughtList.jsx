@@ -50,7 +50,7 @@ const ThoughtList = ({ thoughts }) => {
                   Submitted: {thought.createdAt.toLocaleString()}
                 </p>
                 <div className="mt-2 flex gap-3 text-gray-500 text-sm">
-                  <button className="hover:text-green-600">
+                  <button className="hover:text-green-600 hover:cursor-pointer">
                     ✅ Mark as Done
                   </button>
                 </div>

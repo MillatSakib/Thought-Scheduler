@@ -1,17 +1,51 @@
 import React, { useState } from "react";
 import logo from "./assets/logo.png";
 import { NavLink } from "react-router-dom";
-
-const ThoughtForm = ({ onSave }) => {
+import { ToastContainer, toast } from "react-toastify";
+const ThoughtForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("Medium");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-    onSave({ title, description, createdAt: new Date() });
+  const handleSubmit = async () => {
+    if (!title || !description) {
+      toast.error("Title and Description are required!", {
+        position: "bottom-right",
+      });
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/addthought`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: localStorage.getItem("token"),
+          data: {
+            email: localStorage.getItem("email"),
+            title,
+            description,
+            priority,
+            createdAt: new Date(),
+          },
+        }),
+      });
+      const data = await res.json();
+      console.log("Response:", data);
+      if (data.Access === "Forbidden Access") {
+        toast.error("Forbidden Access. Login again!", {
+          position: "bottom-right",
+        });
+        return;
+      }
+      toast("Thought added successfully!", { position: "bottom-right" });
+    } catch (err) {
+      toast.error(err.message, { position: "bottom-right" });
+    }
+
+    // Reset form
     setTitle("");
     setDescription("");
+    setPriority("Medium");
   };
 
   return (
@@ -27,7 +61,7 @@ const ThoughtForm = ({ onSave }) => {
             Capture Your Thoughts
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600">
                 Title
@@ -58,8 +92,8 @@ const ThoughtForm = ({ onSave }) => {
                 Priority
               </label>
               <select
-                // value={priority}
-                // onChange={(e) => setPriority(e.target.value)}
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
                 className="w-full rounded-md border border-gray-300 p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400"
               >
                 <option value="High">🔥 High</option>
@@ -70,7 +104,7 @@ const ThoughtForm = ({ onSave }) => {
 
             <div className="flex gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 className="flex-1 rounded-md bg-gradient-to-r from-indigo-500 to-green-400 px-4 py-2 font-medium text-white shadow hover:opacity-90"
               >
                 Save Thought
@@ -83,8 +117,9 @@ const ThoughtForm = ({ onSave }) => {
                   Go work list
                 </button>
               </NavLink>
+              <ToastContainer />
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
