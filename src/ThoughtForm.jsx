@@ -2,13 +2,29 @@ import React, { useState } from "react";
 import logo from "./assets/logo.png";
 import { NavLink } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
+
 const ThoughtForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
+  const navigate = useNavigate();
+  const buttonRef = useRef(null);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("email");
+    toast("Logged out successfully!", { position: "bottom-right" });
+    navigate("/login");
+  };
 
   const handleSubmit = async () => {
+    const toastId = toast.loading("Adding your thought...", {
+      position: "bottom-right",
+    });
+    buttonRef.current.disabled = true;
     if (!title || !description) {
+      buttonRef.current.disabled = false;
       toast.error("Title and Description are required!", {
         position: "bottom-right",
       });
@@ -30,19 +46,24 @@ const ThoughtForm = () => {
         }),
       });
       const data = await res.json();
-      console.log("Response:", data);
+
       if (data.Access === "Forbidden Access") {
         toast.error("Forbidden Access. Login again!", {
           position: "bottom-right",
         });
+        toast.dismiss(toastId);
+        buttonRef.current.disabled = false;
         return;
       }
       toast("Thought added successfully!", { position: "bottom-right" });
+      toast.dismiss(toastId);
+      buttonRef.current.disabled = false;
     } catch (err) {
+      toast.dismiss(toastId);
       toast.error(err.message, { position: "bottom-right" });
+      buttonRef.current.disabled = false;
     }
 
-    // Reset form
     setTitle("");
     setDescription("");
     setPriority("Medium");
@@ -103,12 +124,6 @@ const ThoughtForm = () => {
             </div>
 
             <div className="flex gap-4">
-              <button
-                onClick={handleSubmit}
-                className="flex-1 rounded-md bg-gradient-to-r from-indigo-500 to-green-400 px-4 py-2 font-medium text-white shadow hover:opacity-90"
-              >
-                Save Thought
-              </button>
               <NavLink to=".././workList">
                 <button
                   type="button"
@@ -117,9 +132,24 @@ const ThoughtForm = () => {
                   Go work list
                 </button>
               </NavLink>
+              <button
+                onClick={handleSubmit}
+                className="flex-1 rounded-md bg-gradient-to-r from-indigo-500 to-green-400 px-4 py-2 font-medium text-white shadow hover:opacity-90"
+                ref={buttonRef}
+              >
+                Save Thought
+              </button>
               <ToastContainer />
             </div>
           </div>
+        </div>
+        <div className="flex justify-center mb-4">
+          <button
+            onClick={handleLogout}
+            className="rounded-md bg-red-500 px-4 py-2 text-white font-medium shadow hover:bg-red-600"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>

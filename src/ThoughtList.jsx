@@ -1,7 +1,62 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+function formatDateTime(isoString) {
+  const date = new Date(isoString);
 
-const ThoughtList = ({ thoughts }) => {
+  // Options for formatting
+  const options = {
+    year: "numeric",
+    month: "long", // "September"
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+
+  // Format using Intl API
+  return date.toLocaleString("en-US", options);
+}
+
+const ThoughtList = ({ thoughts, setThoughts }) => {
+  const updateThoughts = async (id) => {
+    const toastID = toast.loading("Updating...", {
+      position: "bottom-right",
+    });
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/updatethought/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: localStorage.getItem("token"),
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.Access === "Forbidden Access") {
+        toast.dismiss(toastID);
+        toast.error("Forbidden Access. Login again!", {
+          position: "bottom-right",
+        });
+        return;
+      }
+      // setThoughts(data.thoughts);
+      toast.dismiss(toastID);
+      toast("Thought marked as done successfully!", {
+        position: "bottom-right",
+      });
+      setThoughts((prevThoughts) =>
+        prevThoughts.filter((thought) => thought._id !== id)
+      );
+    } catch (err) {
+      toast.dismiss(toastID);
+      toast.error("Backend server error", {
+        position: "bottom-right",
+      });
+    }
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 to-green-600">
       <div className="mt-5 w-full max-w-lg rounded-xl bg-white p-8 shadow-xl">
@@ -43,20 +98,24 @@ const ThoughtList = ({ thoughts }) => {
                     {thought.priority}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-800 mt-1">
                   {thought.description}
                 </p>
-                <p className="mt-2 text-xs text-gray-400">
-                  Submitted: {thought.createdAt.toLocaleString()}
+                <p className="mt-2 text-xs text-green-600">
+                  Submitted: {formatDateTime(thought?.createdAt)}
                 </p>
                 <div className="mt-2 flex gap-3 text-gray-500 text-sm">
-                  <button className="hover:text-green-600 hover:cursor-pointer">
+                  <button
+                    onClick={() => updateThoughts(thought._id)}
+                    className="hover:text-green-600 hover:cursor-pointer"
+                  >
                     ✅ Mark as Done
                   </button>
                 </div>
               </div>
             ))}
           </div>
+          <ToastContainer />
         </div>
       </div>
     </div>
