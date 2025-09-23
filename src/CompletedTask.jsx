@@ -20,6 +20,7 @@ function formatDateTime(isoString) {
 
 function CompletedTask() {
   const [thoughts, setThoughts] = useState([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     // Fetch thoughts from backend
     const fetchThoughts = async () => {
@@ -37,16 +38,26 @@ function CompletedTask() {
         const data = await res.json();
         if (data.Access === "Forbidden Access") {
           // Handle forbidden access, maybe redirect to login
+          setLoading(false);
           return;
         }
         // setThoughts(data.thoughts);
         setThoughts(data);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching thoughts:", err);
+        setLoading(false);
       }
     };
     fetchThoughts();
   }, []);
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 to-green-600">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
+  }
   return (
     <>
       <App thoughts={thoughts} setThoughts={setThoughts} />

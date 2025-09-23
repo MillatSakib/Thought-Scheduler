@@ -19,6 +19,70 @@ function formatDateTime(isoString) {
 }
 
 const ThoughtList = ({ thoughts, setThoughts }) => {
+  const [filter, setFilter] = React.useState("All");
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  React.useEffect(() => {
+    const fetchThoughts = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/mythoughts`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              authorization: localStorage.getItem("token"),
+            },
+          }
+        );
+        const data = await res.json();
+        if (data.Access === "Forbidden Access") {
+          setInitialLoading(false);
+          return;
+        }
+        setThoughts(data);
+        setInitialLoading(false);
+      } catch (err) {
+        console.error("Error fetching thoughts:", err);
+        setInitialLoading(false);
+      }
+    };
+    fetchThoughts();
+  }, []);
+
+  const handleFilterChange = async (e) => {
+    const toastID = toast.loading("Fetching...", {
+      position: "bottom-right",
+    });
+    setFilter(e.target.value);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/thought/${e.target.value}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: localStorage.getItem("token"),
+          },
+        }
+      );
+      const data = await res.json();
+      console.log(data);
+      if (data.Access === "Forbidden Access") {
+        toast.dismiss(toastID);
+        toast.error("Forbidden Access. Login again!", {
+          position: "bottom-right",
+        });
+        return;
+      }
+      setThoughts(data.thoughts);
+      toast.dismiss(toastID);
+    } catch (err) {
+      toast.dismiss(toastID);
+      toast.error("Backend server error", {
+        position: "bottom-right",
+      });
+    }
+  };
   const updateThoughts = async (id) => {
     const toastID = toast.loading("Updating...", {
       position: "bottom-right",
@@ -57,6 +121,13 @@ const ThoughtList = ({ thoughts, setThoughts }) => {
       });
     }
   };
+  if (initialLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 to-green-600">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 to-green-600">
       <div className="mt-5 w-full max-w-lg rounded-xl bg-white p-8 shadow-xl">
@@ -77,6 +148,26 @@ const ThoughtList = ({ thoughts, setThoughts }) => {
               See Completed Tasks
             </button>
           </NavLink>
+        </div>
+        <div>
+          <label
+            htmlFor="priority-filter"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Filter by Priority
+          </label>
+          <select
+            id="priority-filter"
+            name="priority-filter"
+            value={filter}
+            onChange={handleFilterChange}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option>All</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
         </div>
         <div className="mt-10 w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
           <h3 className="mb-4 text-lg font-semibold">
