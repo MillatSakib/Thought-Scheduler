@@ -25,6 +25,7 @@ const ThoughtForm = () => {
     buttonRef.current.disabled = true;
     if (!title || !description) {
       buttonRef.current.disabled = false;
+      toast.dismiss(toastId);
       toast.error("Title and Description are required!", {
         position: "bottom-right",
       });

@@ -4,6 +4,7 @@ import Login from "./Login";
 import Signup from "./Signup";
 import App from "./App";
 import ThoughtForm from "./ThoughtForm";
+import CompletedTask from "./CompletedTask";
 
 const AppRoutes = () => {
   return (
@@ -15,7 +16,7 @@ const AppRoutes = () => {
       {/* After login, show dashboard */}
       <Route path="/dashboard" element={<ThoughtForm />} />
       <Route path="/workList" element={<App />} />
-
+      <Route path="/completedTasks" element={<CompletedTask />} />
       {
         //<ThoughtForm />} />
       }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 function formatDateTime(isoString) {
@@ -18,14 +18,50 @@ function formatDateTime(isoString) {
   return date.toLocaleString("en-US", options);
 }
 
-const ThoughtList = ({ thoughts, setThoughts }) => {
+function CompletedTask() {
+  const [thoughts, setThoughts] = useState([]);
+  useEffect(() => {
+    // Fetch thoughts from backend
+    const fetchThoughts = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/completedTask`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              authorization: localStorage.getItem("token"),
+            },
+          }
+        );
+        const data = await res.json();
+        if (data.Access === "Forbidden Access") {
+          // Handle forbidden access, maybe redirect to login
+          return;
+        }
+        // setThoughts(data.thoughts);
+        setThoughts(data);
+      } catch (err) {
+        console.error("Error fetching thoughts:", err);
+      }
+    };
+    fetchThoughts();
+  }, []);
+  return (
+    <>
+      <App thoughts={thoughts} setThoughts={setThoughts} />
+    </>
+  );
+}
+
+const App = ({ thoughts, setThoughts }) => {
   const updateThoughts = async (id) => {
     const toastID = toast.loading("Updating...", {
       position: "bottom-right",
     });
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/updatethought/${id}`,
+        `${import.meta.env.VITE_API_URL}/removeFromComplete/${id}`,
         {
           method: "PATCH",
           headers: {
@@ -69,12 +105,12 @@ const ThoughtList = ({ thoughts, setThoughts }) => {
               Add A task
             </button>
           </NavLink>
-          <NavLink to=".././completedTasks">
+          <NavLink to=".././workList">
             <button
               type="button"
               className="flex-1 rounded-md border border-gray-400 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100"
             >
-              See Completed Tasks
+              See Work List
             </button>
           </NavLink>
         </div>
@@ -119,7 +155,7 @@ const ThoughtList = ({ thoughts, setThoughts }) => {
                     onClick={() => updateThoughts(thought._id)}
                     className="hover:text-green-600 hover:cursor-pointer"
                   >
-                    ✅ Mark as Done
+                    ❎ Remove from completed
                   </button>
                 </div>
               </div>
@@ -132,4 +168,4 @@ const ThoughtList = ({ thoughts, setThoughts }) => {
   );
 };
 
-export default ThoughtList;
+export default CompletedTask;
